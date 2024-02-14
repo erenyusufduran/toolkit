@@ -50,7 +50,7 @@ Here is html code:
 </form>
 ```
 
-and here is go code:
+and here is go code for upload one file and upload more than one f'les:
 
 ```go
 import (
@@ -170,7 +170,7 @@ There is html code:
 </p>
 ```
 
-and here is go code:
+and here is go code for download a static file:
 
 ```go
 import (
