@@ -202,3 +202,157 @@ func downloadFile(w http.ResponseWriter, r *http.Request) {
 	t.DownloadStaticFile(w, r, "./files", "pic.jpeg", "puppy.jpeg")
 }
 ```
+
+### Working With JSON
+
+HTML side:
+
+```html
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1 class="mt-2">JSON Functionality</h1>
+                <hr>
+                <form>
+                    <div class="mb-3">
+                        <label for="json" class="form-label">JSON to Send:</label>
+                        <textarea name="json" id="json" rows="5" style="font-family: 'Courier New', Courier, monospace;" class="form-control">
+                        {
+                            "action": "some action",
+                            "message": "some message"
+                        }
+                        </textarea>
+                    </div>
+                    <a id="pushBtn" class="btn btn-primary">Push JSON</a>
+                </form>
+                <hr>
+                <p><strong>Response from server:</strong></p>
+                <div style="outline: 1px solid silver; padding: 2em;">
+                    <pre id="response">No response from server yet...</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pushBtn = document.getElementById("pushBtn")
+        let jsonPayload = document.getElementById("json")
+        let serverResponse = document.getElementById("response")
+
+        pushBtn.addEventListener("click", function () {
+            console.log("clicked json is", jsonPayload.value)
+
+            const payload = jsonPayload.value
+            const headers = new Headers()
+
+            const body = {
+                method: "POST",
+                body: payload,
+                headers: headers
+            }
+
+            headers.append("Content-Type", "application/json")
+
+			// you can change the remote-service whatever you use
+            fetch("http://localhost:8081/remote-service", body).then((response) => response.json()).then((data) => {
+                serverResponse.innerHTML = JSON.stringify(data, undefined, 4)
+            }).catch((e) => {
+                serverResponse.innerHTML = "<br><br>Error: " + error
+            })
+        }) 
+    </script>
+</body>
+```
+
+```go
+import (
+	"log"
+	"net/http"
+
+	"github.com/erenyusufduran/toolkit"
+)
+
+type RequestPayload struct {
+	Action  string `json:"action"`
+	Message string `json:"message"`
+}
+
+type ResponsePayload struct {
+	StatusCode int    `json:"status_code,omitempty"`
+	Message    string `json:"message"`
+}
+
+func main() {
+	mux := http.NewServeMux()
+
+	mux.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("."))))
+	mux.HandleFunc("/receive-post", receivePost)
+	mux.HandleFunc("/remote-service", remoteService)
+	mux.HandleFunc("/simulated-service", simulatedService)
+
+	log.Println("Starting service...")
+
+	err := http.ListenAndServe(":8081", mux)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func receivePost(w http.ResponseWriter, r *http.Request) {
+	var requestPayload RequestPayload
+	var t toolkit.Tools
+
+	err := t.ReadJSON(w, r, &requestPayload)
+	if err != nil {
+		t.ErrorJSON(w, err)
+		return
+	}
+
+	responsePayload := ResponsePayload{
+		Message: "hit the handler okay, and sending response",
+	}
+
+	err = t.WriteJSON(w, http.StatusAccepted, responsePayload)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func remoteService(w http.ResponseWriter, r *http.Request) {
+	var requestPayload RequestPayload
+	var t toolkit.Tools
+
+	err := t.ReadJSON(w, r, &requestPayload)
+	if err != nil {
+		t.ErrorJSON(w, err)
+		return
+	}
+
+	// call a remote service
+	_, statusCode, err := t.PushJSONToRemote("http://localhost:8081/simulated-service", requestPayload)
+	if err != nil {
+		t.ErrorJSON(w, err)
+		return
+	}
+
+	responsePayload := ResponsePayload{
+		Message:    "hit the handler okay, and sending response",
+		StatusCode: statusCode,
+	}
+
+	err = t.WriteJSON(w, http.StatusAccepted, responsePayload)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func simulatedService(w http.ResponseWriter, r *http.Request) {
+	payload := ResponsePayload{
+		Message: "ok",
+	}
+
+	var t toolkit.Tools
+	_ = t.WriteJSON(w, http.StatusOK, payload)
+}
+```
