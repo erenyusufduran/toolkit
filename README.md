@@ -8,6 +8,7 @@ The included Tools are:
 
 - Get a random string of length n
 - Upload a file to a specified directory
+- Create a directory, including all parent directories, if it does not already exist
 
 ## Installation
 
