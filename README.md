@@ -10,6 +10,7 @@ The included Tools are:
 - Upload a file to a specified directory
 - Create a directory, including all parent directories, if it does not already exist
 - Create a URL safe slug from a string
+- Download a static file
 
 
 ## Installation
