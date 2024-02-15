@@ -11,7 +11,10 @@ The included Tools are:
 - Create a directory, including all parent directories, if it does not already exist
 - Create a URL safe slug from a string
 - Download a static file
-
+- Read JSON
+- Write JSON
+- Produce a JSON encoded error response
+- Post JSON to a remote service
 
 ## Installation
 
